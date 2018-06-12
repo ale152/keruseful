@@ -126,18 +126,20 @@ class PlotResuls(Callback):
    
 class ShowEveryLayer(Callback):
     '''This callbacks uses the function show_model_output'''
-    def __init__(self, model, x_target, layers=None, show_each=1):
+    def __init__(self, model, x_target, layers=None, show_each=1, verbose=0):
         self.model = model
         self.x_target = x_target
         self.layers = layers
         self.show_each = show_each
+        self.verbose = verbose
         
     def on_epoch_end(self, epoch, logs=None):
         # Plot the intermediate layers
         if (epoch+1) % self.show_each == 0:
-            show_intermediate_output(self.model, self.x_target, self.layers)
+            show_intermediate_output(self.model, self.x_target, self.layers,
+                                     self.verbose)
 			
-def show_intermediate_output(model, x_target, layers=None):
+def show_intermediate_output(model, x_target, layers=None, verbose=0):
     '''Show the output of the intermediate layers of the model'''
     # Enumare the layers
     if layers is None:
@@ -159,9 +161,10 @@ def show_intermediate_output(model, x_target, layers=None):
         subout = submodel.predict(x_target[None, ])[0, ]
         
         # Plot the outputs
-        print('[%d] %s: %s' % (
-                li, layer.name, 
-                ' '.join(['%d' % bf for bf in subout.shape])))
+        if verbose == 1:
+            print('[%d] %s: %s' % (
+                    li, layer.name, 
+                    ' '.join(['%d' % bf for bf in subout.shape])))
         plt.figure('#%d, %s' % (li, layer.name))
         plt.clf()
         # One dimensional output or two dimensional with less than 3 elements
