@@ -87,7 +87,7 @@ class PlotResuls(Callback):
             self.val_losses.append(logs['val_loss'])
         
         # Plot the loss
-        if (epoch+1) % self.loss_each == 0:
+        if self.loss_each > 0 and (epoch+1) % self.loss_each == 0:
             plt.figure(self.fig_loss.number)
             plt.clf()
             plt.plot(self.losses, label='Loss')
@@ -100,7 +100,7 @@ class PlotResuls(Callback):
                 plt.savefig('%s.png' % self.saveloss)
         
         # Plot the prediction
-        if (epoch+1) % self.prediction_each == 0:
+        if self.prediction_each > 0 and (epoch+1) % self.prediction_each == 0:
             plt.figure(self.fig_pred.number)
             plt.clf()
             y_pred = self.model.predict(self.x_test[None, ])[0, ]
@@ -135,7 +135,7 @@ class ShowEveryLayer(Callback):
         
     def on_epoch_end(self, epoch, logs=None):
         # Plot the intermediate layers
-        if (epoch+1) % self.show_each == 0:
+        if self.show_each > 0 and (epoch+1) % self.show_each == 0:
             show_intermediate_output(self.model, self.x_target, self.layers,
                                      self.verbose)
 			
