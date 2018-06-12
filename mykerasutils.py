@@ -126,25 +126,26 @@ class PlotResuls(Callback):
    
 class ShowEveryLayer(Callback):
     '''This callbacks uses the function show_model_output'''
-    def __init__(self, model, x_target, layer=None, show_each=1):
+    def __init__(self, model, x_target, layers=None, show_each=1):
         self.model = model
         self.x_target = x_target
-        self.layer = layer
+        self.layers = layers
         self.show_each = show_each
         
     def on_epoch_end(self, epoch, logs=None):
         # Plot the intermediate layers
         if (epoch+1) % self.show_each == 0:
-            show_intermediate_output(self.model, self.x_target, self.layer)
+            show_intermediate_output(self.model, self.x_target, self.layers)
 			
-def show_intermediate_output(model, x_target, layer=None):
+def show_intermediate_output(model, x_target, layers=None):
     '''Show the output of the intermediate layers of the model'''
     # Enumare the layers
-    if layer is None:
+    if layers is None:
         layerate = enumerate(model.layers)
     else:
         def layerator():
-            yield layer, model.layers[layer]
+            for layer in layers:
+                yield layer, model.layers[layer]
         layerate = layerator()
         
     # Loop over the layers
@@ -264,7 +265,7 @@ if __name__ == '__main__':
 
     # Define the callbacks
     plot_results = PlotResuls(x_test[0, ], y_test[0, ])
-    show_every_layer = ShowEveryLayer(model, x_test[0, ], show_each=2, layer=3)
+    show_every_layer = ShowEveryLayer(model, x_test[0, ], show_each=2, layers=[3, 0])
     model.fit(x_train, y_train, validation_data=(x_test, y_test),
               epochs=10, callbacks=[plot_results, show_every_layer])
 
