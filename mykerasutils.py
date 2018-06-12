@@ -145,7 +145,11 @@ def show_intermediate_output(model, x_target, layers=None):
     else:
         def layerator():
             for layer in layers:
-                yield layer, model.layers[layer]
+                if isinstance(layer, str):
+                    bf = [(li, lay) for li, lay in enumerate(model.layers) if lay.name == layer][0]
+                    yield bf[0], bf[1]
+                elif isinstance(layer, int):
+                    yield layer, model.layers[layer]
         layerate = layerator()
         
     # Loop over the layers
@@ -245,7 +249,7 @@ if __name__ == '__main__':
     y_test = keras.utils.to_categorical(y_test, 10)
     
     # Simple Convnet
-    inputs = Input(shape=(28, 28, ))
+    inputs = Input(shape=(28, 28, ), name='input')
     net = Reshape((28, 28, 1))(inputs)
     net = Conv2D(32, kernel_size=(3, 3))(net)
     net = MaxPooling2D(pool_size=(2, 2))(net)
@@ -265,7 +269,7 @@ if __name__ == '__main__':
 
     # Define the callbacks
     plot_results = PlotResuls(x_test[0, ], y_test[0, ])
-    show_every_layer = ShowEveryLayer(model, x_test[0, ], show_each=2, layers=[3, 0])
+    show_every_layer = ShowEveryLayer(model, x_test[0, ], show_each=2, layers=[3, 'input'])
     model.fit(x_train, y_train, validation_data=(x_test, y_test),
               epochs=10, callbacks=[plot_results, show_every_layer])
 
