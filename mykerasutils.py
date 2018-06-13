@@ -174,11 +174,8 @@ def show_intermediate_output(model, x_target, layers=None, verbose=0, savefig=No
         
         # One dimensional output or two dimensional with less than 3 elements
         if len(subout.shape) == 1:
-            # If the layer has no weights, just plot the output
-            if layer.get_weights() == []:
-                plt.plot(subout)    
-            # If the layer has weights, plot them with the output
-            else:
+            # If the layer is Dense, show the input, weights and output
+            if type(layer).__name__ == 'Dense':
                 # Find the input of this layer (output of previous layer)
                 prevmodel = Model(inputs=model.input, outputs=model.layers[li-1].output)
                 prevout = prevmodel.predict(x_target[None, ])[0, ]
@@ -208,6 +205,9 @@ def show_intermediate_output(model, x_target, layers=None, verbose=0, savefig=No
                 plt.plot(subout, x)
                 
                 plt.tight_layout()
+            else:
+                # If it's not Dense, just plot the output
+                plt.plot(subout)  
             
         elif len(subout.shape) == 2:
             # Image plot
