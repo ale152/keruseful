@@ -224,6 +224,28 @@ def show_intermediate_output(model, x_target, layers=None, verbose=0, savefig=No
             plt.imshow(subout, cmap='jet')
             plt.axis('tight')
             plt.colorbar()
+        elif len(subout.shape) == 4:
+            # First, squeeze each image in the 3rd dimension in a grid and
+            # make a sequence of grids
+            init = True
+            Nseq = subout.shape[3]
+            for i in range(Nseq):
+                grid = squeeze_imgseq_to_grid(subout[:, :, :, i])
+                if init:
+                    init = False
+                    seq_of_grid = np.zeros((grid.shape[0], grid.shape[1], Nseq))
+                    
+                seq_of_grid[:, :, i] = grid
+                
+            # Second, convert the sequence of grids into a grid
+            grid_of_grids = squeeze_imgseq_to_grid(seq_of_grid)
+            
+            # Set NaN margins to black
+            cmap = matplotlib.cm.jet
+            cmap.set_bad('k')
+            plt.imshow(grid_of_grids, cmap='jet')
+            plt.axis('tight')
+            plt.colorbar()
             
         plt.title('Layer: %s, size: %s' % (layer.name, ' '.join(['%d' % bf for bf in real_dims])))                    
         plt.pause(0.1)
