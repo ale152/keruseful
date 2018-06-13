@@ -160,14 +160,19 @@ def show_intermediate_output(model, x_target, layers=None, verbose=0, savefig=No
         # Get the output of the layer
         submodel = Model(inputs=model.input, outputs=layer.output)
         subout = submodel.predict(x_target[None, ])[0, ]
+
+        # Remove singleton dimensions
+        real_dims = subout.shape
+        subout = np.squeeze(subout)
         
         # Plot the outputs
         if verbose == 1:
             print('[%d] %s: %s' % (
                     li, layer.name, 
-                    ' '.join(['%d' % bf for bf in subout.shape])))
+                    ' '.join(['%d' % bf for bf in real_dims])))
         plt.figure('#%d, %s' % (li, layer.name))
         plt.clf()
+        
         # One dimensional output or two dimensional with less than 3 elements
         if len(subout.shape) == 1:
             # If the layer has no weights, just plot the output
@@ -220,7 +225,7 @@ def show_intermediate_output(model, x_target, layers=None, verbose=0, savefig=No
             plt.axis('tight')
             plt.colorbar()
             
-        plt.title('Layer: %s, size: %s' % (layer.name, ' '.join(['%d' % bf for bf in subout.shape])))                    
+        plt.title('Layer: %s, size: %s' % (layer.name, ' '.join(['%d' % bf for bf in real_dims])))                    
         plt.pause(0.1)
         if savefig is not None:
             plt.savefig('%s_%d_%s.png' % (savefig, li, layer.name))
