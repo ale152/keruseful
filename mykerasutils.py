@@ -7,6 +7,7 @@ Created on Tue May 29 11:17:46 2018
 
 import numpy as np
 import matplotlib
+import keras
 from keras.callbacks import Callback
 from keras.models import Model
 from matplotlib import pyplot as plt
@@ -34,6 +35,7 @@ def get_model_memory_usage(batch_size, model):
 
     return gbytes
 
+
 def get_max_batch_size(mem_avail, model, max_batch=None):
     '''Evaluate the maximum batch size that fits into memory'''
     import numpy as np
@@ -57,21 +59,19 @@ def get_max_batch_size(mem_avail, model, max_batch=None):
 
     return int(batch_size)
 
+
 # %% Useful callbacks 
 class PlotResuls(Callback):
     '''This callback plots the losses and the prediction of the network during
     training'''
-    def __init__(self, x_test, y_test, 
-                 prediction_each=1, # Show the prediciton each N epochs
-                 loss_each=1, # Show the losses each N epochs
-                 savepred=None, # Save the prediction figure
-                 saveloss=None): # Save the losses figure
+    def __init__(self, x_test, y_test, prediction_each=1, loss_each=1, 
+                 savepred=None, saveloss=None): 
         self.x_test = x_test
         self.y_test = y_test
-        self.prediction_each = prediction_each
-        self.loss_each = loss_each
-        self.savepred = savepred
-        self.saveloss = saveloss
+        self.prediction_each = prediction_each  # Show the prediciton each N epochs
+        self.loss_each = loss_each  # Show the losses each N epochs
+        self.savepred = savepred  # Save the prediction figure
+        self.saveloss = saveloss  # Save the losses figure
 
     def on_train_begin(self, logs=None):
         # Create the figure and initialise the loss arrays
@@ -83,7 +83,7 @@ class PlotResuls(Callback):
     def on_epoch_end(self, epoch, logs=None):
         # Store the losses at each epoch
         self.losses.append(logs['loss'])
-        if 'val_loss' in logs.keys():
+        if 'val_loss' in logs:
             self.val_losses.append(logs['val_loss'])
         
         # Plot the loss
@@ -139,6 +139,7 @@ class ShowEveryLayer(Callback):
         if self.show_each > 0 and (epoch+1) % self.show_each == 0:
             show_intermediate_output(self.model, self.x_target, self.layers,
                                      self.verbose, self.savefig)
+
 			
 def show_intermediate_output(model, x_target, layers=None, verbose=0, savefig=None):
     '''Show the output of the intermediate layers of the model'''
@@ -149,7 +150,7 @@ def show_intermediate_output(model, x_target, layers=None, verbose=0, savefig=No
         def layerator():
             for layer in layers:
                 if isinstance(layer, str):
-                    bf = [(li, lay) for li, lay in enumerate(model.layers) if lay.name == layer][0]
+                    bf = next((li, lay) for li, lay in enumerate(model.layers) if lay.name == layer)
                     yield bf[0], bf[1]
                 elif isinstance(layer, int):
                     yield layer, model.layers[layer]
@@ -166,16 +167,14 @@ def show_intermediate_output(model, x_target, layers=None, verbose=0, savefig=No
         
         # Plot the outputs
         if verbose == 1:
-            print('[%d] %s: %s' % (
-                    li, layer.name, 
-                    ' '.join(['%d' % bf for bf in real_dims])))
+            print('[%d] %s: %s' % (li, layer.name, str(real_dims)))
         plt.figure('#%d, %s' % (li, layer.name))
         plt.clf()
         
         # One dimensional output or two dimensional with less than 3 elements
         if len(subout.shape) == 1:
             # If the layer is Dense, show the input, weights and output
-            if type(layer).__name__ == 'Dense':
+            if isinstance(layer, keras.layers.Dense):
                 # Find the input of this layer (output of previous layer)
                 prevmodel = Model(inputs=model.input, outputs=model.layers[li-1].output)
                 prevout = prevmodel.predict(x_target[None, ])[0, ]
@@ -246,11 +245,12 @@ def show_intermediate_output(model, x_target, layers=None, verbose=0, savefig=No
             plt.axis('tight')
             plt.colorbar()
             
-        plt.title('Layer: %s, size: %s' % (layer.name, ' '.join(['%d' % bf for bf in real_dims])))                    
+        plt.title('Layer: %s, size: %s' % (layer.name, str(real_dims)))
         plt.pause(0.1)
         if savefig is not None:
             plt.savefig('%s_%d_%s.png' % (savefig, li, layer.name))
-            
+
+       
 def squeeze_imgseq_to_grid(imgseq, ratio=16/9, margin_size=1, margin_value=np.nan):
     '''Take a 3D matrix containing 'Nimg' images in the form of (x, y, Nimg) 
     and output a single image containing the 'Nimg' images disposed on a 
@@ -272,6 +272,7 @@ def squeeze_imgseq_to_grid(imgseq, ratio=16/9, margin_size=1, margin_value=np.na
     imgseq = np.reshape(np.transpose(imgseq, (0, 1, 3, 2)), (dim[0]*Ny, dim[1]*Nx), order='F')
     
     return imgseq
+
 
 # %% Test
 if __name__ == '__main__':
