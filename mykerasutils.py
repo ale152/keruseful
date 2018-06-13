@@ -161,9 +161,8 @@ def show_intermediate_output(model, x_target, layers=None, verbose=0, savefig=No
         submodel = Model(inputs=model.input, outputs=layer.output)
         subout = submodel.predict(x_target[None, ])[0, ]
 
-        # Remove singleton dimensions
+        # Save layers dimension
         real_dims = subout.shape
-        subout = np.squeeze(subout)
         
         # Plot the outputs
         if verbose == 1:
