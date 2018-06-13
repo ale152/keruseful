@@ -211,21 +211,8 @@ def show_intermediate_output(model, x_target, layers=None, verbose=0, savefig=No
             plt.axis('tight')
             plt.colorbar()
         elif len(subout.shape) == 3:
-            # Pad the output with NaN according to margin
-            margin = 1
-            Ny = int(np.ceil(np.sqrt(subout.shape[2]*9/16)))
-            Nx = int(np.ceil(np.sqrt(subout.shape[2]*16/9)))
-            N3d = Nx*Ny
-            padded = np.zeros((subout.shape[0]+margin*2, 
-                               subout.shape[1]+margin*2, 
-                               N3d))
-            for i in range(subout.shape[2]):
-                padded[:, :, i] = np.pad(subout[:, :, i], margin, 'constant', constant_values=np.nan)
-                
-            # Reshape the output into a 2D grid
-            dim = padded.shape
-            subout = np.reshape(np.transpose(padded, (0, 2, 1)), (dim[0], Ny, Nx, dim[1]), order='F')
-            subout = np.reshape(np.transpose(subout, (0, 1, 3, 2)), (dim[0]*Ny, dim[1]*Nx), order='F')
+            # Squeeze all the images on a grid
+            subout = squeeze_imgseq_to_grid(subout)
             # Set NaN margins to black
             cmap = matplotlib.cm.jet
             cmap.set_bad('k')
@@ -237,6 +224,28 @@ def show_intermediate_output(model, x_target, layers=None, verbose=0, savefig=No
         plt.pause(0.1)
         if savefig is not None:
             plt.savefig('%s_%d_%s.png' % (savefig, li, layer.name))
+            
+def squeeze_imgseq_to_grid(imgseq, ratio=16/9, margin_size=1, margin_value=np.nan):
+    '''Take a 3D matrix containing 'Nimg' images in the form of (x, y, Nimg) 
+    and output a single image containing the 'Nimg' images disposed on a 
+    2D grid'''
+    # Pad the output with NaN according to margin
+    Ny = int(np.ceil(np.sqrt(imgseq.shape[2]/ratio)))
+    Nx = int(np.ceil(np.sqrt(imgseq.shape[2]*ratio)))
+    N3d = Nx*Ny
+    padded = np.zeros((imgseq.shape[0]+margin_size*2, 
+                       imgseq.shape[1]+margin_size*2, 
+                       N3d))
+    for i in range(imgseq.shape[2]):
+        padded[:, :, i] = np.pad(imgseq[:, :, i], margin_size, 
+              'constant', constant_values=margin_value)
+        
+    # Reshape the output into a 2D grid
+    dim = padded.shape
+    imgseq = np.reshape(np.transpose(padded, (0, 2, 1)), (dim[0], Ny, Nx, dim[1]), order='F')
+    imgseq = np.reshape(np.transpose(imgseq, (0, 1, 3, 2)), (dim[0]*Ny, dim[1]*Nx), order='F')
+    
+    return imgseq
 
 # %% Test
 if __name__ == '__main__':
